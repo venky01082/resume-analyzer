@@ -1,5 +1,5 @@
 streamlit
-pandas
-sentence-transformers
-reportlab
 pdfplumber
+spacy
+requests
+reportlab
