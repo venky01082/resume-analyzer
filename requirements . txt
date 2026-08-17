@@ -1,5 +1,6 @@
 streamlit
 pdfplumber
-spacy
 requests
-reportlab
+pandas
+numpy
+spacy
