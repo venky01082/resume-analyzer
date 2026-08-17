@@ -1,0 +1,139 @@
+[
+    {
+        "id": 1,
+        "company": "TechNova Solutions",
+        "title": "Data Analyst Intern",
+        "location": "Hyderabad",
+        "type": "Internship",
+        "skills": [
+            "Python",
+            "SQL",
+            "Power BI",
+            "Excel",
+            "Pandas",
+            "Statistics"
+        ],
+        "description": "Looking for a Data Analyst Intern with Python, SQL, Power BI, Excel, Pandas and Statistics skills.",
+        "application_url": "https://example.com/job/1"
+    },
+    {
+        "id": 2,
+        "company": "AI Innovations",
+        "title": "Machine Learning Intern",
+        "location": "Bangalore",
+        "type": "Internship",
+        "skills": [
+            "Python",
+            "Machine Learning",
+            "Pandas",
+            "NumPy",
+            "Scikit-learn",
+            "TensorFlow"
+        ],
+        "description": "Machine Learning Intern required with Python, Machine Learning, Pandas, NumPy, Scikit-learn and TensorFlow.",
+        "application_url": "https://example.com/job/2"
+    },
+    {
+        "id": 3,
+        "company": "DataWorks",
+        "title": "Python Developer Intern",
+        "location": "Remote",
+        "type": "Internship",
+        "skills": [
+            "Python",
+            "SQL",
+            "Git",
+            "GitHub",
+            "FastAPI",
+            "Flask"
+        ],
+        "description": "Python Developer Intern with Python, SQL, Git, GitHub and backend development knowledge.",
+        "application_url": "https://example.com/job/3"
+    },
+    {
+        "id": 4,
+        "company": "CloudTech",
+        "title": "AI Engineer Intern",
+        "location": "Pune",
+        "type": "Internship",
+        "skills": [
+            "Python",
+            "Artificial Intelligence",
+            "Machine Learning",
+            "Deep Learning",
+            "TensorFlow",
+            "AWS"
+        ],
+        "description": "AI Engineer Intern with Artificial Intelligence, Machine Learning, Deep Learning, Python and cloud knowledge.",
+        "application_url": "https://example.com/job/4"
+    },
+    {
+        "id": 5,
+        "company": "Analytics Hub",
+        "title": "Data Science Intern",
+        "location": "Chennai",
+        "type": "Internship",
+        "skills": [
+            "Python",
+            "SQL",
+            "Machine Learning",
+            "Pandas",
+            "NumPy",
+            "Statistics",
+            "Data Visualization"
+        ],
+        "description": "Data Science Intern with Python, SQL, Machine Learning, Pandas, NumPy, Statistics and Data Visualization.",
+        "application_url": "https://example.com/job/5"
+    },
+    {
+        "id": 6,
+        "company": "WebSoft",
+        "title": "Full Stack Developer Intern",
+        "location": "Hyderabad",
+        "type": "Internship",
+        "skills": [
+            "HTML",
+            "CSS",
+            "JavaScript",
+            "Python",
+            "Django",
+            "Git"
+        ],
+        "description": "Full Stack Developer Intern with HTML, CSS, JavaScript, Python, Django and Git.",
+        "application_url": "https://example.com/job/6"
+    },
+    {
+        "id": 7,
+        "company": "VisionAI",
+        "title": "Computer Vision Intern",
+        "location": "Bangalore",
+        "type": "Internship",
+        "skills": [
+            "Python",
+            "Computer Vision",
+            "Deep Learning",
+            "PyTorch",
+            "OpenCV",
+            "NumPy"
+        ],
+        "description": "Computer Vision Intern with Python, Computer Vision, Deep Learning, PyTorch, OpenCV and NumPy.",
+        "application_url": "https://example.com/job/7"
+    },
+    {
+        "id": 8,
+        "company": "CloudData",
+        "title": "Cloud Data Intern",
+        "location": "Remote",
+        "type": "Internship",
+        "skills": [
+            "Python",
+            "SQL",
+            "AWS",
+            "Azure",
+            "Data Analysis",
+            "Git"
+        ],
+        "description": "Cloud Data Intern with Python, SQL, AWS, Azure, Data Analysis and Git skills.",
+        "application_url": "https://example.com/job/8"
+    }
+]

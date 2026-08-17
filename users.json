@@ -1,0 +1,20 @@
+{
+    "venky": {
+        "username": "venky",
+        "password_hash": "iADSkqAkjkFqTFHCzcxiloCQcbATLLE1YNAbtOW3jj4=",
+        "password_salt": "N3SSmMbrs+gl7ZSUbug8aw==",
+        "profile": {
+            "full_name": "Venkaiah Naidu Pallapolu",
+            "email": "venky050408@gmail.com",
+            "phone": "",
+            "location": "Vijayawada",
+            "target_roles": "",
+            "skills": "",
+            "experience": "",
+            "education": "",
+            "linkedin": "https://in.linkedin.com/in/venkaiah-naidu-pallapolu-87876339b",
+            "github": "",
+            "portfolio": ""
+        }
+    }
+}
