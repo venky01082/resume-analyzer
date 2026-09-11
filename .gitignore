@@ -1,0 +1,18 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+
+# Environments
+.venv/
+venv/
+ENV/
+env/
+
+# Streamlit cache
+.streamlit/__pycache__/
+
+# Local refactor backups
+app_backup.py
+backup_before_advanced_upgrade/
