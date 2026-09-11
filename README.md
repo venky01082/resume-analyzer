@@ -29,22 +29,31 @@ A production-grade, multi-user career copilot and application command center des
 - **`services/job_search.py`**: Orchestrates multi-source search, filtering (remote/location), and deduplication.
 - **`services/job_recommendation.py`**: Multi-factor scoring engine evaluating skill overlap, target roles, geographic preferences, work mode, and experience to generate transparent *Why You Match* and *What Is Missing* explanations.
 
-### 5. 📌 10-Stage CRM Application Lifecycle Tracker (`📌 Application Tracker`)
+### 6. 🎙️ Adaptive AI Mock Interview Bot (`🎙️ Mock Interview`)
+- **Multi-Mode Interview Practice**: General, Technical, Behavioral, HR, Mixed, and Job-Specific modes.
+- **Resume & Job-Grounded Questions**: Extracts verified projects, tools, and job criteria. Strictly refuses to invent candidate experience.
+- **Adaptive Question Sequencing**: Raises question difficulty and probes system design trade-offs following strong answers; asks foundational recovery questions following weak answers.
+- **Transparent Multi-Factor Scoring**: Evaluates answers across Technical Depth, Relevance, Completeness, Clarity, and Problem Solving with constructive strengths (`✓`) and actionable areas to improve (`⚠`).
+- **Interactive Improvement Mode**: Automatically synthesizes focused mini-interviews zeroing in directly on observed weak spots (e.g. System Design, SQL query tuning, STAR behavioral framing).
+- **Session Persistence & Timer**: Pause/resume sessions at will, optional live countdown timer (15m/30m/45m/60m), and Web Speech voice dictation bridge.
+- **Cross-Platform Deep Integration**: Direct 1-click interview practice from **Job Search**, **Job Matching**, **Application Tracker**, and the **Executive Dashboard**.
+
+### 7. 📌 10-Stage CRM Application Lifecycle Tracker (`📌 Application Tracker`)
 - **Industry-Standard Stages**:
   $$\text{Wishlist} \longrightarrow \text{Saved} \longrightarrow \text{Applied} \longrightarrow \text{Assessment} \longrightarrow \text{Interview} \longrightarrow \text{Technical Round} \longrightarrow \text{HR Round} \longrightarrow \text{Offer} \longrightarrow \text{Rejected} \longrightarrow \text{Withdrawn}$$
 - **Chronological Status History**: Logs every stage transition with timestamps and notes.
 - **Triage Follow-Ups**: Proactively categorizes pending recruiter communications into `Overdue`, `Due Today`, and `Upcoming`.
 - **CSV Data Export**: Instant download of the active pipeline.
 
-### 6. 🤖 Semi-Automatic Application Assistant & Smart Checklist (`🤖 Application Assistant`)
+### 8. 🤖 Semi-Automatic Application Assistant & Smart Checklist (`🤖 Application Assistant`)
 - **7-Item Readiness Checklist**: Verifies candidate resume, ATS compatibility, tailored summary, cover letter, outreach email, job requirements, and application link.
 - **Strictly User-Controlled (Human-in-the-Loop)**: Never submits applications automatically or spams employers. Final submission is always user-controlled on the official employer portal.
 
-### 7. ✍️ AI Application Content Studio (`✨ Tailoring`, `✍️ Cover Letter`, `📧 Email`)
+### 9. ✍️ AI Application Content Studio (`✨ Tailoring`, `✍️ Cover Letter`, `📧 Email`)
 - **Truth Preservation**: Grounds all bullets and summaries strictly in the candidate's actual background without fabricating credentials or experience.
 - **Customizable Outreach**: Tone and length selectors with styled ReportLab PDF and text exports.
 
-### 8. 📊 Factual User Analytics (`📊 Analytics`)
+### 10. 📊 Factual User Analytics (`📊 Analytics`)
 - True conversion funnels (Response Rate, Interview Rate, Offer Rate) calculated strictly from user data.
 - Enforces an honest statistical guardrail ("Not enough data yet") when fewer than 3 applications exist.
 
@@ -56,10 +65,11 @@ A production-grade, multi-user career copilot and application command center des
 resume-analyzer/
 ├── database/                      # Database Abstraction & Persistence Layer
 │   ├── __init__.py                # Clean unified exports
-│   ├── models.py                  # Dataclass schemas (UserProfile, ResumeRecord, etc.)
+│   ├── models.py                  # Dataclass schemas (UserProfile, InterviewSession, etc.)
 │   ├── connection.py              # Dual PostgreSQL/Supabase + SQLite adapter
-│   ├── migrations.py              # DDL schema creation & legacy JSON auto-migration
+│   ├── migrations.py              # DDL schema creation (13 tables) & legacy JSON migration
 │   ├── repository.py              # Parameterized, user-isolated CRUD repository
+│   ├── interview_repo.py          # Isolated interview session/Q&A/evaluation/report repo
 │   ├── users.py                   # User & auth backward-compatibility wrapper
 │   ├── resumes.py                 # Multi-resume library wrapper
 │   ├── jobs.py                    # Saved jobs bookmark wrapper
@@ -71,21 +81,27 @@ resume-analyzer/
 │   ├── job_deduplicator.py        # Canonical token deduplication
 │   ├── job_sources.py             # Adzuna API client & curated catalog reader
 │   ├── job_search.py              # Search orchestration & filtering
-│   └── job_recommendation.py      # Multi-factor candidate-job fit & explanations
+│   ├── job_recommendation.py      # Multi-factor candidate-job fit & explanations
+│   ├── interview_engine.py        # Central interview state machine & lifecycle
+│   ├── interview_questions.py     # Resume-grounded & job-specific adaptive generator
+│   ├── interview_evaluator.py     # Multi-dimensional answer evaluation & scoring
+│   ├── interview_recommendations.py# Weakness extraction & Improvement Mode planner
+│   └── voice_provider.py          # Web Speech API dictation & audio abstraction
 ├── ui/                            # Modular Streamlit SaaS Components
 │   ├── sidebar.py                 # Categorized navigation with high-contrast styling
 │   ├── styles.py                  # Light SaaS theme CSS
-│   ├── dashboard_ui.py            # Executive dashboard with KPI counters & shortcuts
+│   ├── dashboard_ui.py            # Executive dashboard with Interview Preparation widget
+│   ├── interview_ui.py            # Complete mock interview room, report, & analytics
 │   ├── resume_ui.py               # Resume analyzer & 7-component audit
 │   ├── ats_ui.py                  # ATS score & keyword optimization
 │   ├── my_resumes_ui.py           # Multi-resume manager & version comparison
-│   ├── jobs_ui.py                 # Job search & personalized AI recommendations
+│   ├── jobs_ui.py                 # Job search with 1-click interview practice
 │   ├── saved_jobs_ui.py           # Bookmark catalog & pipeline promotion
-│   ├── matching_ui.py             # 3-pillar candidate-job match breakdown
+│   ├── matching_ui.py             # 3-pillar candidate-job match & interview prep
 │   ├── tailoring_ui.py            # Targeted resume bullet tailoring
 │   ├── cover_letter_ui.py         # Document-preview cover letter generator
 │   ├── email_ui.py                # Recruiter email drafter with PDF export
-│   ├── tracker_ui.py              # 10-stage CRM pipeline & status history
+│   ├── tracker_ui.py              # 10-stage CRM pipeline with interview preparation action
 │   ├── followup_ui.py             # Overdue/Today/Upcoming follow-up triage
 │   ├── assistant_ui.py            # Guided assistant with Smart Application Checklist
 │   ├── analytics_ui.py            # Real conversion funnel charts

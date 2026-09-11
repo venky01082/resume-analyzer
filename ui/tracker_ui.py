@@ -271,7 +271,7 @@ def render_application_tracker():
                         for h in history[-4:]:
                             st.markdown(f"<div style='font-size: 12px; color: #475569; padding-left: 6px;'>• <strong>{h.get('changed_at', '')[:16]}</strong>: <span style='color: #4f46e5; font-weight: 600;'>{h.get('status')}</span> — {h.get('notes')}</div>", unsafe_allow_html=True)
 
-                    act_c1, act_c2, act_c3 = st.columns([1, 1, 1])
+                    act_c1, act_c2, act_c3, act_c4 = st.columns([1, 1, 1, 1])
                     with act_c1:
                         if st.button("💾 Save Changes", key=f"save_edit_{idx}", type="primary", use_container_width=True):
                             ok = update_application(
@@ -296,5 +296,15 @@ def render_application_tracker():
                         if st.button("🗑️ Delete Record", key=f"del_app_{idx}", use_container_width=True):
                             delete_application(user_id=username, identifier=app_id or idx)
                             st.success("Deleted from tracker.")
+                            st.rerun()
+                    with act_c4:
+                        if st.button("🎙️ Prepare Interview", key=f"prep_iv_{idx}", use_container_width=True):
+                            st.session_state.interview_selected_job = {
+                                "title": item.get("title", "Position"),
+                                "company": item.get("company", "Company"),
+                                "description": item.get("job_description") or item.get("notes") or "",
+                                "skills": [],
+                            }
+                            st.session_state.current_page = "mock_interview"
                             st.rerun()
 

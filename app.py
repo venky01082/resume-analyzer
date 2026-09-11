@@ -167,6 +167,10 @@ elif current_page == "application_email":
     from ui.email_ui import render_application_email
     render_application_email()
 
+elif current_page == "mock_interview":
+    from ui.interview_ui import render_mock_interview
+    render_mock_interview()
+
 elif current_page == "application_tracker":
     from ui.tracker_ui import render_application_tracker
     render_application_tracker()

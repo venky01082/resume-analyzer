@@ -274,7 +274,7 @@ def render_job_matching():
             Turn these match insights into actionable application assets:
         </p>
     """, unsafe_allow_html=True)
-    act_col1, act_col2, act_col3 = st.columns(3)
+    act_col1, act_col2, act_col3, act_col4 = st.columns(4)
 
     with act_col1:
         if st.button("✨ Tailor Resume for this Role", use_container_width=True, type="primary"):
@@ -300,6 +300,19 @@ def render_job_matching():
                 notes="Created via Job Matching Engine."
             )
             st.success("Added to Application Tracker as 'Saved'!")
+
+    with act_col4:
+        if st.button("🎙️ Practice for this Job", use_container_width=True):
+            title_guess = target_jd.split("\n")[0][:40] if target_jd else "Target Role"
+            st.session_state.interview_selected_job = {
+                "title": title_guess.strip(),
+                "company": "Target Company",
+                "description": target_jd,
+                "skills": job_skills,
+                "matching_skills": matching_skills,
+            }
+            st.session_state.current_page = "mock_interview"
+            st.rerun()
 
     st.markdown("</div>", unsafe_allow_html=True)
 

@@ -198,6 +198,11 @@ def delete_user_account(username: str) -> bool:
     execute_mutation("DELETE FROM applications WHERE user_id = ?", (username,))
     execute_mutation("DELETE FROM application_status_history WHERE user_id = ?", (username,))
     execute_mutation("DELETE FROM generated_documents WHERE user_id = ?", (username,))
+    execute_mutation("DELETE FROM interview_reports WHERE user_id = ?", (username,))
+    execute_mutation("DELETE FROM interview_evaluations WHERE user_id = ?", (username,))
+    execute_mutation("DELETE FROM interview_answers WHERE user_id = ?", (username,))
+    execute_mutation("DELETE FROM interview_questions WHERE user_id = ?", (username,))
+    execute_mutation("DELETE FROM interview_sessions WHERE user_id = ?", (username,))
     return count > 0
 
 
@@ -962,3 +967,27 @@ def calculate_user_analytics(user_id: str) -> Dict[str, Any]:
         "has_sufficient_data": has_sufficient_data,
         "insights": insights
     }
+
+
+# =========================================================
+# 8. AI MOCK INTERVIEW DELEGATES
+# =========================================================
+
+from database.interview_repo import (
+    create_interview_session,
+    get_interview_session,
+    get_user_interview_sessions,
+    update_interview_session,
+    delete_interview_session,
+    add_interview_question,
+    get_interview_questions,
+    save_interview_answer,
+    get_interview_answers,
+    save_interview_evaluation,
+    get_interview_evaluations,
+    save_interview_report,
+    get_interview_report,
+    get_user_interview_reports,
+    get_interview_progress_analytics,
+)
+

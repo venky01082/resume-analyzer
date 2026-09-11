@@ -13,6 +13,7 @@ from database.applications import (
 )
 from database.resumes import get_resumes
 from database.jobs import get_saved_jobs
+from database.repository import get_interview_progress_analytics
 
 
 def render_dashboard():
@@ -247,6 +248,60 @@ def render_dashboard():
                                 st.info("Already tracked.")
 
     with col_right:
+        # Interview Preparation Card
+        st.markdown("### 🎙️ Interview Preparation")
+        iv_data = get_interview_progress_analytics(username)
+        if iv_data["has_data"]:
+            latest_rec = iv_data["recent_reports"][0]
+            lat_score = iv_data["latest_score"]
+            lat_role = latest_rec.get("target_role", "Target Role")
+            score_color = "#10b981" if lat_score >= 80 else ("#4f46e5" if lat_score >= 65 else "#f59e0b")
+            
+            delta_html = ""
+            if iv_data["has_previous"]:
+                d_val = iv_data["score_delta"]
+                d_color = "#10b981" if d_val >= 0 else "#ef4444"
+                d_sign = "+" if d_val >= 0 else ""
+                delta_html = f"<div style='font-size: 11px; font-weight: 700; color: {d_color}; margin-top: 2px;'>{d_sign}{d_val} points from previous interview</div>"
+            
+            st.markdown(f"""
+            <div class="saas-card" style="padding: 1rem; margin-bottom: 0.75rem;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div>
+                        <span style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase;">Latest Interview</span>
+                        <div style="font-weight: 700; font-size: 15px; color: #0f172a; margin-top: 2px;">{lat_role}</div>
+                        {delta_html}
+                    </div>
+                    <div style="text-align: right;">
+                        <span style="font-size: 26px; font-weight: 800; color: {score_color};">{lat_score}</span>
+                        <span style="font-size: 13px; color: #94a3b8;">/100</span>
+                    </div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            iv_b1, iv_b2 = st.columns([1, 1])
+            with iv_b1:
+                if st.button("🎙️ Practice Again", key="dash_iv_practice", use_container_width=True, type="primary"):
+                    st.session_state.current_page = "mock_interview"
+                    st.rerun()
+            with iv_b2:
+                if st.button("📊 View Report", key="dash_iv_report", use_container_width=True):
+                    st.session_state.interview_view_report_id = latest_rec.get("session_id")
+                    st.session_state.current_page = "mock_interview"
+                    st.rerun()
+        else:
+            st.markdown("""
+            <div class="saas-card" style="padding: 1rem; margin-bottom: 0.75rem;">
+                <div style="font-size: 13.5px; font-weight: 700; color: #0f172a; margin-bottom: 4px;">Practice with AI Mock Interview</div>
+                <div style="font-size: 12px; color: #64748b; margin-bottom: 10px;">Run adaptive role-specific interviews with instant evaluation and weak-spot analysis.</div>
+            </div>
+            """, unsafe_allow_html=True)
+            if st.button("🎙️ Start First Interview", key="dash_iv_start_first", use_container_width=True, type="primary"):
+                st.session_state.current_page = "mock_interview"
+                st.rerun()
+
+        st.markdown("<div style='height: 14px;'></div>", unsafe_allow_html=True)
         st.markdown("### 📌 Recent Applications")
         if not applications:
             st.markdown("""

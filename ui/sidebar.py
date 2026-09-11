@@ -20,6 +20,9 @@ NAV_SECTIONS = [
         ("✍️ Cover Letter", "cover_letter"),
         ("📧 Application Email", "application_email"),
     ]),
+    ("INTERVIEW PREPARATION", [
+        ("🎙️ Mock Interview", "mock_interview"),
+    ]),
     ("TRACKING & WORKFLOW", [
         ("📌 Application Tracker", "application_tracker"),
         ("⏰ Follow-Up Center", "followups"),

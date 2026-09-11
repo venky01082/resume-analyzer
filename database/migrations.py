@@ -157,6 +157,108 @@ def init_db():
         )
         """)
 
+        # 9. Interview Sessions Table
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS interview_sessions (
+            session_id TEXT PRIMARY KEY,
+            user_id TEXT NOT NULL,
+            target_role TEXT NOT NULL,
+            interview_type TEXT DEFAULT 'Technical',
+            difficulty TEXT DEFAULT 'Adaptive',
+            interviewer_personality TEXT DEFAULT 'Professional',
+            question_count INTEGER DEFAULT 5,
+            duration_minutes INTEGER DEFAULT 15,
+            resume_id TEXT DEFAULT '',
+            job_id TEXT DEFAULT '',
+            status TEXT DEFAULT 'in_progress',
+            started_at TEXT NOT NULL,
+            completed_at TEXT DEFAULT '',
+            overall_score REAL DEFAULT 0.0,
+            current_question_index INTEGER DEFAULT 0,
+            weak_topics TEXT DEFAULT '[]',
+            strong_topics TEXT DEFAULT '[]',
+            metadata TEXT DEFAULT '{}',
+            FOREIGN KEY(user_id) REFERENCES users(username) ON DELETE CASCADE
+        )
+        """)
+
+        # 10. Interview Questions Table
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS interview_questions (
+            question_id TEXT PRIMARY KEY,
+            session_id TEXT NOT NULL,
+            user_id TEXT NOT NULL,
+            question_number INTEGER NOT NULL,
+            question_text TEXT NOT NULL,
+            category TEXT DEFAULT 'Technical Knowledge',
+            difficulty TEXT DEFAULT 'Medium',
+            context_origin TEXT DEFAULT '',
+            created_at TEXT NOT NULL,
+            FOREIGN KEY(session_id) REFERENCES interview_sessions(session_id) ON DELETE CASCADE
+        )
+        """)
+
+        # 11. Interview Answers Table
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS interview_answers (
+            answer_id TEXT PRIMARY KEY,
+            question_id TEXT NOT NULL,
+            session_id TEXT NOT NULL,
+            user_id TEXT NOT NULL,
+            answer_text TEXT NOT NULL,
+            submitted_at TEXT NOT NULL,
+            word_count INTEGER DEFAULT 0,
+            FOREIGN KEY(question_id) REFERENCES interview_questions(question_id) ON DELETE CASCADE,
+            FOREIGN KEY(session_id) REFERENCES interview_sessions(session_id) ON DELETE CASCADE
+        )
+        """)
+
+        # 12. Interview Evaluations Table
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS interview_evaluations (
+            evaluation_id TEXT PRIMARY KEY,
+            answer_id TEXT NOT NULL,
+            session_id TEXT NOT NULL,
+            user_id TEXT NOT NULL,
+            overall_answer_score REAL DEFAULT 0.0,
+            technical_score REAL DEFAULT 0.0,
+            relevance_score REAL DEFAULT 0.0,
+            completeness_score REAL DEFAULT 0.0,
+            clarity_score REAL DEFAULT 0.0,
+            problem_solving_score REAL DEFAULT 0.0,
+            feedback TEXT DEFAULT '',
+            strengths TEXT DEFAULT '[]',
+            improvements TEXT DEFAULT '[]',
+            detected_topics TEXT DEFAULT '[]',
+            is_strong INTEGER DEFAULT 0,
+            evaluated_at TEXT NOT NULL,
+            FOREIGN KEY(answer_id) REFERENCES interview_answers(answer_id) ON DELETE CASCADE,
+            FOREIGN KEY(session_id) REFERENCES interview_sessions(session_id) ON DELETE CASCADE
+        )
+        """)
+
+        # 13. Interview Reports Table
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS interview_reports (
+            report_id TEXT PRIMARY KEY,
+            session_id TEXT UNIQUE NOT NULL,
+            user_id TEXT NOT NULL,
+            target_role TEXT NOT NULL,
+            overall_score REAL DEFAULT 0.0,
+            technical_score REAL DEFAULT 0.0,
+            problem_solving_score REAL DEFAULT 0.0,
+            communication_score REAL DEFAULT 0.0,
+            completeness_score REAL DEFAULT 0.0,
+            relevance_score REAL DEFAULT 0.0,
+            strengths TEXT DEFAULT '[]',
+            weaknesses TEXT DEFAULT '[]',
+            recommendations TEXT DEFAULT '[]',
+            question_reviews TEXT DEFAULT '[]',
+            created_at TEXT NOT NULL,
+            FOREIGN KEY(session_id) REFERENCES interview_sessions(session_id) ON DELETE CASCADE
+        )
+        """)
+
         # Create Indexes for Query Performance & Isolation
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_resumes_user ON resumes(user_id)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_saved_jobs_user ON saved_jobs(user_id)")
@@ -164,6 +266,11 @@ def init_db():
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_applications_status ON applications(user_id, status)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_history_app ON application_status_history(app_id)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_docs_user ON generated_documents(user_id)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_interview_sessions_user ON interview_sessions(user_id)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_interview_questions_session ON interview_questions(session_id)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_interview_answers_session ON interview_answers(session_id)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_interview_evaluations_session ON interview_evaluations(session_id)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_interview_reports_user ON interview_reports(user_id)")
 
     # Run automatic zero-loss migration from legacy JSON stores
     migrate_legacy_data()

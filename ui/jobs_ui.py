@@ -153,7 +153,7 @@ def render_job_search():
                         with st.expander("📋 View Job Description"):
                             st.write(job.get("description"))
 
-                    b1, b2, b3 = st.columns([1, 1, 1])
+                    b1, b2, b3, b4 = st.columns([1, 1, 1, 1])
                     with b1:
                         if url:
                             st.link_button("🔗 Apply Live", url, use_container_width=True)
@@ -191,6 +191,17 @@ def render_job_search():
                                 st.rerun()
                             else:
                                 st.info("Already tracked in your pipeline.")
+                    with b4:
+                        if st.button("🎙️ Practice Interview", key=f"interview_live_job_{idx}", use_container_width=True):
+                            st.session_state.interview_selected_job = {
+                                "title": job.get("title", "Unknown"),
+                                "company": job.get("company", "Unknown"),
+                                "description": job.get("description", ""),
+                                "skills": job.get("skills", []),
+                                "matching_skills": matching,
+                            }
+                            st.session_state.current_page = "mock_interview"
+                            st.rerun()
 
     # =========================================================
     # TAB 2: LOCAL JOB DATABASE
@@ -352,7 +363,7 @@ def render_job_search():
 
                 st.markdown("</div>", unsafe_allow_html=True)
 
-                c_a1, c_a2, c_a3 = st.columns([1, 1, 1])
+                c_a1, c_a2, c_a3, c_a4 = st.columns([1, 1, 1, 1])
                 with c_a1:
                     if url:
                         st.link_button("🔗 View & Apply", url, use_container_width=True)
@@ -380,6 +391,17 @@ def render_job_search():
                             st.rerun()
                         else:
                             st.info("Already tracked.")
+                with c_a4:
+                    if st.button("🎙️ Practice", key=f"interview_rec_{idx}", use_container_width=True):
+                        st.session_state.interview_selected_job = {
+                            "title": job.get("title", "Unknown"),
+                            "company": job.get("company", "Unknown"),
+                            "description": job.get("description", ""),
+                            "skills": job.get("skills", []),
+                            "matching_skills": matching,
+                        }
+                        st.session_state.current_page = "mock_interview"
+                        st.rerun()
         except Exception as err:
             st.error(f"Error computing recommendations: {err}")
 
