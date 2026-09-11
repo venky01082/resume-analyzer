@@ -103,76 +103,23 @@ def auth_verify_password(password, salt_b64, hash_b64):
 def auth_create_user(
     username, password, full_name="", email="", phone="",
     location="", target_roles="", skills="", experience="",
-    education="", linkedin="", github="", portfolio=""
+    education="", linkedin="", github="", portfolio="", **kwargs
 ):
-    username = username.strip().lower()
-    if not username or not password:
-        return False, "Username and password are required."
-    users = auth_load_users()
-    if username in users:
-        return False, "Username already exists."
-    if len(username) < 3:
-        return False, "Username must contain at least 3 characters."
-    if len(password) < 6:
-        return False, "Password must contain at least 6 characters."
-
-    salt, password_hash = auth_hash_password(password)
-    users[username] = {
-        "username": username,
-        "password_hash": password_hash,
-        "password_salt": salt,
-        "profile": {
-            "full_name": full_name.strip(),
-            "email": email.strip(),
-            "phone": phone.strip(),
-            "location": location.strip(),
-            "target_roles": target_roles.strip(),
-            "skills": skills.strip(),
-            "experience": experience.strip(),
-            "education": education.strip(),
-            "linkedin": linkedin.strip(),
-            "github": github.strip(),
-            "portfolio": portfolio.strip()
-        }
-    }
-    auth_save_users(users)
-    return True, "Account created successfully."
-
-
-def auth_login(username, password):
-    username = username.strip().lower()
-    users = auth_load_users()
-    if username not in users:
-        return False
-    user = users[username]
-    return auth_verify_password(
-        password,
-        user.get("password_salt", ""),
-        user.get("password_hash", "")
+    from database.repository import create_user, update_user_profile
+    ok, msg = create_user(
+        username=username,
+        password=password,
+        full_name=full_name,
+        email=email,
+        target_roles=target_roles
     )
+    if not ok:
+        return False, msg
 
-
-def auth_get_profile(username):
-    users = auth_load_users()
-    if username not in users:
-        return {}
-    return users[username].get("profile", {})
-
-
-def auth_update_profile(
-    username, full_name, email, phone, location,
-    target_roles, skills, experience, education,
-    linkedin, github, portfolio
-):
-    users = auth_load_users()
-    if username not in users:
-        return False
-    users[username]["profile"] = {
-        "full_name": full_name.strip(),
-        "email": email.strip(),
+    # Update any extended profile fields
+    extra_fields = {
         "phone": phone.strip(),
         "location": location.strip(),
-        "target_roles": target_roles.strip(),
         "skills": skills.strip(),
         "experience": experience.strip(),
         "education": education.strip(),
@@ -180,17 +127,50 @@ def auth_update_profile(
         "github": github.strip(),
         "portfolio": portfolio.strip()
     }
-    auth_save_users(users)
-    return True
+    for k, v in kwargs.items():
+        if v is not None:
+            extra_fields[k] = v
+    update_user_profile(username, extra_fields)
+    return True, msg
+
+def auth_login(username, password):
+    from database.repository import verify_user_credentials
+    return verify_user_credentials(username, password)
+
+
+def auth_get_profile(username):
+    from database.repository import get_user_profile
+    return get_user_profile(username)
+
+
+def auth_update_profile(
+    username, full_name="", email="", phone="", location="",
+    target_roles="", skills="", experience="", education="",
+    linkedin="", github="", portfolio="", **kwargs
+):
+    from database.repository import update_user_profile
+    profile_data = {
+        "full_name": full_name.strip() if isinstance(full_name, str) else "",
+        "email": email.strip() if isinstance(email, str) else "",
+        "phone": phone.strip() if isinstance(phone, str) else "",
+        "location": location.strip() if isinstance(location, str) else "",
+        "target_roles": target_roles.strip() if isinstance(target_roles, str) else "",
+        "skills": skills.strip() if isinstance(skills, str) else "",
+        "experience": experience.strip() if isinstance(experience, str) else "",
+        "education": education.strip() if isinstance(education, str) else "",
+        "linkedin": linkedin.strip() if isinstance(linkedin, str) else "",
+        "github": github.strip() if isinstance(github, str) else "",
+        "portfolio": portfolio.strip() if isinstance(portfolio, str) else ""
+    }
+    for k, v in kwargs.items():
+        if v is not None:
+            profile_data[k] = v
+    return update_user_profile(username, profile_data)
 
 
 def auth_delete_account(username):
-    users = auth_load_users()
-    if username not in users:
-        return False
-    del users[username]
-    auth_save_users(users)
-    return True
+    from database.repository import delete_user_account
+    return delete_user_account(username)
 
 
 # =========================================================

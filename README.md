@@ -1,109 +1,102 @@
-# 🚀 AI Off-Campus Job Application Assistant
+# 🚀 AI Off-Campus Job Application Platform — Enterprise Edition
 
-A modern, production-grade SaaS career copilot designed for job seekers, graduates, and professionals. Features end-to-end resume intelligence, ATS optimization, intelligent job matching, automated outreach generation, a 9-stage application lifecycle tracker with proactive follow-up alerts, multi-resume management, and multi-user data isolation.
+A production-grade, multi-user career copilot and application command center designed for job seekers, graduates, and professionals. Features a dual-backend database abstraction layer (PostgreSQL/Supabase + Zero-Config SQLite), an automated legacy data migration engine, a decoupled services layer, AI-driven job recommendations, an 18-attribute candidate profile, a 10-stage CRM pipeline, and strict human-in-the-loop application submission.
 
 ---
 
 ## 🌟 Key Highlights & Features
 
-### 1. 🛡️ Multi-User Authentication & Data Isolation
-- **Secure Security**: PBKDF2 HMAC SHA-256 password hashing with 200,000 iterations and cryptographic salts.
-- **Strict Data Isolation**: Every resume, bookmarked job, application record, and analytics calculation is strictly isolated by `user_id`.
-- **User Profiles & Preferences**: Manage user contact info, target job roles, preferred locations, and notification settings.
+### 1. 🛡️ Dual-Mode Database Abstraction & Multi-User Isolation
+- **Dual Database Architecture**: Connects seamlessly to **PostgreSQL / Supabase** via `DATABASE_URL` (or Streamlit secrets) in production, while defaulting to a thread-safe, zero-config local **SQLite database** (`database/job_assistant.db`) during development.
+- **Zero-Data-Loss Migration**: Automatically detects and migrates legacy JSON data (`users.json`, `applications.json`, `resumes.json`, `saved_jobs.json`) into relational tables on initial startup.
+- **Enterprise Password Security**: Salted PBKDF2 HMAC SHA-256 password hashing with 200,000 iterations, password strength validation, and duplicate email/username prevention.
+- **Strict Data Isolation**: Every resume, bookmark, CRM application record, and analytics metric is strictly scoped to the authenticated `user_id`.
 
-### 2. 📄 Multi-Resume Management & Versioning (`📁 My Resumes`)
-- **Multi-Resume Library**: Maintain separate resume versions (e.g., *Frontend Engineering*, *Data Science*, *General Tech*).
-- **Default Resume Toggle**: Set a primary default resume that automatically pre-populates the ATS analyzer, job matcher, and tailoring engines.
+### 2. 👤 Comprehensive 18-Field Candidate Profile (`👤 Profile`)
+- Supports detailed career specifications: Professional Title, Target Roles, Preferred Locations, Work Mode (Remote / Hybrid / On-site / Any), Years of Experience, Technical Skills, Soft Skills, Education, Certifications, Preferred Industries, Expected Salary, Notice Period, Work Authorization, LinkedIn, GitHub, and Portfolio URLs.
+- Automatically powers personalized job matching and AI recommendations.
+
+### 3. 📄 Multi-Resume Library & 7-Component Health Audit (`📁 My Resumes` & `📄 Resume Analyzer`)
+- **Version Management**: Store distinct resume variations tailored to different career tracks.
+- **Default Resume Setting**: Nominate a primary resume that auto-populates ATS checks, job matching, and tailoring.
 - **Resume Comparison View**: Side-by-side visual diff and skill matrix comparison across any two uploaded resumes.
-- **Comprehensive 7-Component Health Audit**: Evaluates overall score (0–100) across Length/Brevity, Contact Details, Section Structure, Action Verbs, Measurable Metrics/Impact, Formatting Density, and Portfolio/LinkedIn Links.
+- **7-Component Health Audit**: Evaluates overall score (0–100) across Length/Brevity, Contact Details, Section Structure, Action Verbs, Measurable Metrics/Impact, Formatting Density, and Portfolio/LinkedIn Links.
 
-### 3. 🎯 ATS Optimization & Keyword Analysis (`🎯 ATS Analyzer`)
-- **Multi-Resume Selector**: Run ATS checks against any resume from your library or newly pasted content.
-- **Keyword Match Matrix**: Compares hard skills, frameworks, and job requirements.
-- **Ethical Anti-Fabrication Safeguards**: Emphasizes highlighting existing verifiable experience rather than fabricating skills.
+### 4. 🧠 Decoupled Services Layer & AI Recommendations (`services/`)
+- **`services/job_normalizer.py`**: Standardizes postings from heterogeneous sources into a uniform schema.
+- **`services/job_deduplicator.py`**: Removes duplicate postings using canonical composite keys.
+- **`services/job_sources.py`**: Manages live Adzuna queries and curated local catalog jobs with timeout and error handling.
+- **`services/job_search.py`**: Orchestrates multi-source search, filtering (remote/location), and deduplication.
+- **`services/job_recommendation.py`**: Multi-factor scoring engine evaluating skill overlap, target roles, geographic preferences, work mode, and experience to generate transparent *Why You Match* and *What Is Missing* explanations.
 
-### 4. 🔎 Dual-Track Job Discovery (`🔎 Job Search` & `⭐ Saved Jobs`)
-- **Live Search & Local Catalog**: Query live external jobs (Adzuna integration with resilient error-handling) or browse local curated listings.
-- **Dual-Action Tracking**:
-  - **Bookmark (`⭐ Save Job`)**: Save intriguing opportunities to your personal bookmark catalog without cluttering your application pipeline.
-  - **Pipeline Track (`📌 Track Application`)**: Instantly inject a job directly into your 9-stage tracker.
-- **Saved Jobs Management**: Filter bookmarks by title or company, view details, apply via direct external link, or promote directly into your tracker.
-
-### 5. 🧠 Intelligent 3-Pillar Job Matching (`🧠 Job Matching`)
-- **Transparent Scoring**: Evaluates candidate fit across semantic similarity and skill overlap.
-- **3-Pillar Analysis**:
-  1. *Why You Match*: Pinpoints shared skills and relevant background.
-  2. *Why You May Not Match*: Highlights gaps and missing job requirements.
-  3. *What to Improve*: Actionable recommendations to boost candidacy.
-- **1-Click Workflow Bridges**: Jump straight from matching into Resume Tailoring, Cover Letter, or Email generation.
-
-### 6. ✍️ AI Application Content Generator (`✨ Tailoring`, `✍️ Cover Letter`, `📧 Email`)
-- **Resume Tailoring**: Generates targeted professional summaries and keyword-aligned bullet points.
-- **Cover Letter Studio**: Customizable tone (Professional, Confident, Conversational) and length (Short, Medium, Comprehensive) with 1-click styled PDF export.
-- **Application Email Drafter**: Creates recruiter outreach emails, connection notes, and follow-up templates with PDF export.
-
-### 7. 📌 9-Stage Application Lifecycle Tracker (`📌 Application Tracker`)
+### 5. 📌 10-Stage CRM Application Lifecycle Tracker (`📌 Application Tracker`)
 - **Industry-Standard Stages**:
-  `Saved` ➔ `Applied` ➔ `Screening` ➔ `Interview` ➔ `Technical Round` ➔ `HR Round` ➔ `Offer` ➔ `Rejected` ➔ `Withdrawn`
-- **Stage Tab Filters**: Inspect applications by status category or see all at once.
-- **Inline Stage Transitioning**: Advance application stages with a single click.
-- **Deadline Monitoring**: Automatically tracks response and interview dates.
-- **CSV Data Export**: Export active pipeline records to CSV anytime.
+  $$\text{Wishlist} \longrightarrow \text{Saved} \longrightarrow \text{Applied} \longrightarrow \text{Assessment} \longrightarrow \text{Interview} \longrightarrow \text{Technical Round} \longrightarrow \text{HR Round} \longrightarrow \text{Offer} \longrightarrow \text{Rejected} \longrightarrow \text{Withdrawn}$$
+- **Chronological Status History**: Logs every stage transition with timestamps and notes.
+- **Triage Follow-Ups**: Proactively categorizes pending recruiter communications into `Overdue`, `Due Today`, and `Upcoming`.
+- **CSV Data Export**: Instant download of the active pipeline.
 
-### 8. ⏰ Proactive Follow-Up Center (`⏰ Follow-Up Center`)
-- **Deadline Categorization**: Dynamically separates pending follow-ups into `Overdue`, `Today`, and `Upcoming`.
-- **1-Click Follow-up Drafter**: Auto-generates polite, professional follow-up messages tailored to the specific company and role.
+### 6. 🤖 Semi-Automatic Application Assistant & Smart Checklist (`🤖 Application Assistant`)
+- **7-Item Readiness Checklist**: Verifies candidate resume, ATS compatibility, tailored summary, cover letter, outreach email, job requirements, and application link.
+- **Strictly User-Controlled (Human-in-the-Loop)**: Never submits applications automatically or spams employers. Final submission is always user-controlled on the official employer portal.
 
-### 9. 🤖 Semi-Automatic Application Assistant (`🤖 Application Assistant`)
-- **Ethical Human-in-the-Loop Design**: Streamlines form autofill and preparation while keeping final application submission strictly under USER control.
-- Prevents blind spamming and safeguards application credibility.
+### 7. ✍️ AI Application Content Studio (`✨ Tailoring`, `✍️ Cover Letter`, `📧 Email`)
+- **Truth Preservation**: Grounds all bullets and summaries strictly in the candidate's actual background without fabricating credentials or experience.
+- **Customizable Outreach**: Tone and length selectors with styled ReportLab PDF and text exports.
 
-### 10. 📊 Factual User Analytics & Diagnostics (`📊 Analytics` & `⚙️ Settings`)
-- **Factual Conversion Funnel**: Real metrics calculated strictly from user's isolated data (Response Rate, Interview Rate, Offer Rate).
-- **Diagnostics & Backup**: Live storage diagnostics for all 5 JSON databases, user preferences, and a 1-click complete portfolio JSON export.
+### 8. 📊 Factual User Analytics (`📊 Analytics`)
+- True conversion funnels (Response Rate, Interview Rate, Offer Rate) calculated strictly from user data.
+- Enforces an honest statistical guardrail ("Not enough data yet") when fewer than 3 applications exist.
 
 ---
 
 ## 🏗️ Technical Architecture
 
-The application is structured with a decoupled, thread-safe database abstraction layer and clean modular UI views:
-
 ```text
 resume-analyzer/
-├── database/                      # Thread-Safe Database Abstraction Layer
+├── database/                      # Database Abstraction & Persistence Layer
 │   ├── __init__.py                # Clean unified exports
 │   ├── models.py                  # Dataclass schemas (UserProfile, ResumeRecord, etc.)
-│   ├── connection.py              # Thread-safe atomic file I/O adapter
-│   ├── users.py                   # PBKDF2 authentication & profiles
-│   ├── resumes.py                 # Multi-resume versioning & library
-│   ├── jobs.py                    # User-scoped saved jobs bookmarking
-│   ├── applications.py            # 9-stage pipeline & follow-up engine
-│   └── analytics.py               # Factual user-scoped conversion metrics
-├── ui/                            # Modular Streamlit UI Components
-│   ├── sidebar.py                 # Categorized navigation with high-contrast text
-│   ├── styles.py                  # Light SaaS theme & responsive card styling
-│   ├── dashboard_ui.py            # 5 KPI metrics, follow-up alerts, & shortcuts
-│   ├── resume_ui.py               # Resume upload, parsing & 7-component audit
+│   ├── connection.py              # Dual PostgreSQL/Supabase + SQLite adapter
+│   ├── migrations.py              # DDL schema creation & legacy JSON auto-migration
+│   ├── repository.py              # Parameterized, user-isolated CRUD repository
+│   ├── users.py                   # User & auth backward-compatibility wrapper
+│   ├── resumes.py                 # Multi-resume library wrapper
+│   ├── jobs.py                    # Saved jobs bookmark wrapper
+│   ├── applications.py            # 10-stage CRM pipeline wrapper
+│   └── analytics.py               # Factual analytics wrapper
+├── services/                      # Decoupled Business Logic & AI Services
+│   ├── __init__.py                # Clean services interface
+│   ├── job_normalizer.py          # Unified schema transformation & remote detection
+│   ├── job_deduplicator.py        # Canonical token deduplication
+│   ├── job_sources.py             # Adzuna API client & curated catalog reader
+│   ├── job_search.py              # Search orchestration & filtering
+│   └── job_recommendation.py      # Multi-factor candidate-job fit & explanations
+├── ui/                            # Modular Streamlit SaaS Components
+│   ├── sidebar.py                 # Categorized navigation with high-contrast styling
+│   ├── styles.py                  # Light SaaS theme CSS
+│   ├── dashboard_ui.py            # Executive dashboard with KPI counters & shortcuts
+│   ├── resume_ui.py               # Resume analyzer & 7-component audit
 │   ├── ats_ui.py                  # ATS score & keyword optimization
-│   ├── my_resumes_ui.py           # Multi-resume manager & side-by-side comparison
-│   ├── jobs_ui.py                 # Live search, local catalog & dual-save
-│   ├── saved_jobs_ui.py           # Bookmark catalog & promotion to pipeline
+│   ├── my_resumes_ui.py           # Multi-resume manager & version comparison
+│   ├── jobs_ui.py                 # Job search & personalized AI recommendations
+│   ├── saved_jobs_ui.py           # Bookmark catalog & pipeline promotion
 │   ├── matching_ui.py             # 3-pillar candidate-job match breakdown
-│   ├── tailoring_ui.py            # Experience-based resume bullet tailoring
-│   ├── cover_letter_ui.py         # Tailored cover letters with PDF export
-│   ├── email_ui.py                # Cold outreach & application emails with PDF export
-│   ├── tracker_ui.py              # 9-stage Kanban pipeline & CSV export
+│   ├── tailoring_ui.py            # Targeted resume bullet tailoring
+│   ├── cover_letter_ui.py         # Document-preview cover letter generator
+│   ├── email_ui.py                # Recruiter email drafter with PDF export
+│   ├── tracker_ui.py              # 10-stage CRM pipeline & status history
 │   ├── followup_ui.py             # Overdue/Today/Upcoming follow-up triage
-│   ├── assistant_ui.py            # Human-in-the-loop application assistant
-│   ├── analytics_ui.py            # Real conversion funnel & stage distributions
-│   ├── profile_ui.py              # User profile & target role configuration
-│   └── settings_ui.py             # System diagnostics & full portfolio export
+│   ├── assistant_ui.py            # Guided assistant with Smart Application Checklist
+│   ├── analytics_ui.py            # Real conversion funnel charts
+│   ├── profile_ui.py              # 18-attribute candidate profile management
+│   └── settings_ui.py             # System diagnostics & full portfolio JSON export
 ├── app.py                         # Application entrypoint & clean page router
-├── core_logic.py                  # Core NLP, semantic matching, & generators
-├── application_tracker.py         # Backward-compatible user-scoped tracker
-├── job_matcher.py                 # Skill extraction & match scoring
-├── resume_parser.py               # PDF/text extraction & NLP parser
-├── requirements.txt               # Project dependencies
+├── core_logic.py                  # NLP parsing, semantic vectors & document engines
+├── application_tracker.py         # Scoped backward-compatible tracker interface
+├── requirements.txt               # Deployable production dependencies
+├── .env.example                   # Configuration template
+├── .gitignore                     # Git exclusion rules
 └── README.md                      # Documentation
 ```
 
@@ -111,24 +104,41 @@ resume-analyzer/
 
 ## ⚡ Quickstart Guide
 
-### Prerequisites
+### 1. Prerequisites
 - Python 3.10+ (tested and verified on Python 3.13)
 - `pip` package manager
 
-### 1. Install Dependencies
+### 2. Install Dependencies
 ```bash
 pip install -r requirements.txt
 ```
 
-### 2. Launch the Application
+### 3. Configure Environment (Optional)
+Copy `.env.example` to `.env` or configure Streamlit secrets (`.streamlit/secrets.toml`):
+```bash
+# Optional: Provide PostgreSQL/Supabase URL (defaults to zero-config SQLite if blank)
+DATABASE_URL=postgresql://user:password@host:5432/dbname
+
+# Optional: Adzuna API keys for live job querying
+ADZUNA_APP_ID=your_app_id
+ADZUNA_APP_KEY=your_app_key
+```
+
+### 4. Launch the Platform
 ```bash
 streamlit run app.py
 ```
-The application will open in your browser at `http://localhost:8501`.
+Navigate to `http://localhost:8501` to use the application.
+
+### 5. Run the Comprehensive Verification Test Suite
+```bash
+py -3.13 "C:\Users\venky\.gemini\antigravity\brain\4622d331-f2b9-4983-82bb-efaedd85805f\scratch\verify_production_master.py"
+```
 
 ---
 
 ## 🔒 Security & Data Privacy
-- **Local & Private**: All data is stored locally in thread-safe JSON datastores in the user's workspace.
-- **Salted Hashing**: No passwords are ever stored in plaintext.
+- **Salted Hashing**: PBKDF2 HMAC SHA-256 with 200,000 iterations; no passwords stored in plaintext.
+- **SQL Injection Prevention**: All queries across PostgreSQL and SQLite are strictly parameterized.
+- **Strict User Isolation**: All read and write operations are scoped by authenticated `user_id`.
 - **No Hallucinations / No Fabrications**: All ATS keywords, bullet points, and email drafts strictly ground themselves in the candidate's actual supplied background.

@@ -263,6 +263,14 @@ def render_application_tracker():
                         new_url = st.text_input("Job URL", value=url, key=f"edit_url_{idx}")
                     new_notes = st.text_area("Notes & Interview Logs", value=item.get("notes", ""), key=f"edit_notes_{idx}")
 
+                    # Status History Timeline
+                    from database.repository import get_status_history
+                    history = get_status_history(username, app_id) if app_id else []
+                    if history:
+                        st.markdown("<div style='font-size: 11.5px; font-weight: 700; color: #64748b; margin-top: 8px;'>📜 Status Progression History:</div>", unsafe_allow_html=True)
+                        for h in history[-4:]:
+                            st.markdown(f"<div style='font-size: 12px; color: #475569; padding-left: 6px;'>• <strong>{h.get('changed_at', '')[:16]}</strong>: <span style='color: #4f46e5; font-weight: 600;'>{h.get('status')}</span> — {h.get('notes')}</div>", unsafe_allow_html=True)
+
                     act_c1, act_c2, act_c3 = st.columns([1, 1, 1])
                     with act_c1:
                         if st.button("💾 Save Changes", key=f"save_edit_{idx}", type="primary", use_container_width=True):

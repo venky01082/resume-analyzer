@@ -1,6 +1,6 @@
 """
-Database Abstraction Layer for AI Job Application Assistant
-Provides clean, decoupled, user-isolated storage APIs.
+Database Package Interface
+Exposes clean repository functions, models, and connection helpers.
 """
 
 from database.models import (
@@ -8,54 +8,120 @@ from database.models import (
     UserPreferences,
     ResumeRecord,
     SavedJob,
-    ApplicationRecord
+    ApplicationRecord,
+    StatusHistoryEntry,
+    GeneratedDocument,
+    STATUS_OPTIONS,
+    PRIORITY_OPTIONS,
+    WORK_MODE_OPTIONS,
 )
-
-from database.users import (
-    create_user,
+from database.connection import (
+    get_db_connection,
+    execute_query,
+    execute_mutation,
+    get_database_url,
+    is_postgres,
+    read_json_file,
+    write_json_file,
+)
+from database.migrations import init_db, migrate_legacy_data
+from database.repository import (
+    hash_password,
+    verify_password,
+    validate_password_strength,
     get_user,
+    get_user_by_username,
+    get_user_by_email,
+    create_user,
     verify_user_credentials,
+    update_user_password,
+    delete_user_account,
     get_user_profile,
     update_user_profile,
     get_user_preferences,
     update_user_preferences,
-    delete_user_account,
-    hash_password,
-    verify_password
-)
-
-from database.resumes import (
-    save_resume,
     get_resumes,
     get_resume,
     get_default_resume,
+    save_resume,
+    create_resume,
     set_default_resume,
-    update_resume_title,
-    delete_resume
-)
-
-from database.jobs import (
+    delete_resume,
     get_saved_jobs,
     is_job_saved,
     save_job,
-    delete_saved_job
-)
-
-from database.applications import (
+    remove_saved_job,
+    delete_saved_job,
+    update_saved_job_notes,
     get_applications,
     get_application,
     create_application,
     update_application,
     delete_application,
+    get_status_history,
     get_status_counts,
     get_overdue_follow_ups,
     get_today_follow_ups,
     get_upcoming_follow_ups,
-    migrate_legacy_applications,
-    STATUS_OPTIONS,
-    PRIORITY_OPTIONS
+    save_generated_document,
+    get_generated_documents,
+    calculate_user_analytics,
 )
 
-from database.analytics import (
-    calculate_user_analytics
-)
+__all__ = [
+    "UserProfile",
+    "UserPreferences",
+    "ResumeRecord",
+    "SavedJob",
+    "ApplicationRecord",
+    "StatusHistoryEntry",
+    "GeneratedDocument",
+    "STATUS_OPTIONS",
+    "PRIORITY_OPTIONS",
+    "WORK_MODE_OPTIONS",
+    "get_db_connection",
+    "execute_query",
+    "execute_mutation",
+    "init_db",
+    "migrate_legacy_data",
+    "hash_password",
+    "verify_password",
+    "validate_password_strength",
+    "get_user",
+    "get_user_by_username",
+    "get_user_by_email",
+    "create_user",
+    "verify_user_credentials",
+    "update_user_password",
+    "delete_user_account",
+    "get_user_profile",
+    "update_user_profile",
+    "get_user_preferences",
+    "update_user_preferences",
+    "get_resumes",
+    "get_resume",
+    "get_default_resume",
+    "save_resume",
+    "create_resume",
+    "set_default_resume",
+    "delete_resume",
+    "get_saved_jobs",
+    "is_job_saved",
+    "save_job",
+    "remove_saved_job",
+    "delete_saved_job",
+    "update_saved_job_notes",
+    "get_applications",
+    "get_application",
+    "create_application",
+    "update_application",
+    "delete_application",
+    "get_status_history",
+    "get_status_counts",
+    "get_overdue_follow_ups",
+    "get_today_follow_ups",
+    "get_upcoming_follow_ups",
+    "save_generated_document",
+    "get_generated_documents",
+    "calculate_user_analytics",
+]

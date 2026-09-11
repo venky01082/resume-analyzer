@@ -309,49 +309,63 @@ def render_job_search():
         pref_c2.info(f"📍 **Preferred Location:** {default_location}")
 
         try:
-            catalog = load_jobs()
-            scored_recs = recommend_jobs(resume_skills, catalog)
+            from services.job_recommendation import recommend_jobs_for_user
+            from services.job_sources import fetch_local_catalog_jobs
+            catalog = fetch_local_catalog_jobs()
+            scored_recs = recommend_jobs_for_user(username, catalog, limit=10)
 
-            # Boost score if title matches target roles
-            for item in scored_recs:
-                job_title = item["job"].get("title", "").lower()
-                for tr in [r.strip().lower() for r in target_roles.split(",") if r.strip()]:
-                    if tr in job_title:
-                        item["score"] = min(100, item["score"] + 15)
-
-            scored_recs.sort(key=lambda x: x["score"], reverse=True)
-
-            st.markdown(f"#### Top {min(6, len(scored_recs))} Personalized Matches:")
-            for idx, rec in enumerate(scored_recs[:6], start=1):
+            st.markdown(f"#### Top {len(scored_recs)} Personalized AI Opportunities:")
+            for idx, rec in enumerate(scored_recs, start=1):
                 job = rec["job"]
                 score = rec["score"]
-                matching = rec.get("matching_skills", [])
-                missing = rec.get("missing_skills", [])
+                expl = rec.get("explanation", {})
+                matching = expl.get("matching_skills", [])
+                missing = expl.get("missing_skills", [])
+                why_list = expl.get("why_match", [])
+                miss_list = expl.get("what_is_missing", [])
                 url = job.get("application_url") or job.get("redirect_url") or ""
 
                 st.markdown(f"""
-                <div class="saas-card" style="margin-bottom: 0.75rem;">
+                <div class="saas-card" style="margin-bottom: 0.85rem;">
                     <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                         <div>
-                            <div style="font-size: 15px; font-weight: 700; color: #0f172a;">{idx}. {job.get('title')}</div>
-                            <div style="font-size: 12px; color: #64748b;">🏢 {job.get('company')} &nbsp;•&nbsp; 📍 {job.get('location', 'India')}</div>
+                            <div style="font-size: 15.5px; font-weight: 700; color: #0f172a;">{idx}. {job.get('title')}</div>
+                            <div style="font-size: 12.5px; color: #64748b; margin-top: 2px;">🏢 {job.get('company')} &nbsp;•&nbsp; 📍 {job.get('location', 'India')} &nbsp;•&nbsp; 🏷️ {job.get('remote_status', 'Unspecified')}</div>
                         </div>
-                        <span style="background: #ecfdf5; color: #065f46; font-weight: 800; font-size: 13px; padding: 3px 10px; border-radius: 99px; border: 1px solid #a7f3d0;">
-                            🎯 {score}% Personalized Fit
+                        <span style="background: #ecfdf5; color: #065f46; font-weight: 800; font-size: 13px; padding: 3px 12px; border-radius: 99px; border: 1px solid #a7f3d0;">
+                            🎯 {score}% Recommendation Fit
                         </span>
                     </div>
+                """, unsafe_allow_html=True)
+
+                if why_list:
+                    st.markdown(f"<div style='font-size: 12px; color: #047857; margin-top: 6px;'><strong>✓ Why You Match:</strong> {' '.join(why_list)}</div>", unsafe_allow_html=True)
+                if miss_list:
+                    st.markdown(f"<div style='font-size: 12px; color: #b45309; margin-top: 4px;'><strong>⚠️ Missing Requirements:</strong> {' '.join(miss_list)}</div>", unsafe_allow_html=True)
+
+                if matching:
+                    st.markdown(f"""
                     <div class="chip-container" style="margin-top: 8px;">
                         {''.join([f'<span class="skill-chip skill-chip-match">✓ {s}</span>' for s in matching[:6]])}
                     </div>
-                </div>
-                """, unsafe_allow_html=True)
+                    """, unsafe_allow_html=True)
 
-                c_a1, c_a2 = st.columns(2)
+                st.markdown("</div>", unsafe_allow_html=True)
+
+                c_a1, c_a2, c_a3 = st.columns([1, 1, 1])
                 with c_a1:
                     if url:
                         st.link_button("🔗 View & Apply", url, use_container_width=True)
                 with c_a2:
-                    if st.button("🚀 Track this Match", key=f"track_rec_{idx}", use_container_width=True):
+                    if st.button("⭐ Bookmark", key=f"bookmark_rec_{idx}", use_container_width=True):
+                        ok, msg = save_job(user_id=username, title_or_dict=job, score=score)
+                        if ok:
+                            st.success("⭐ Saved to bookmarks!")
+                            st.rerun()
+                        else:
+                            st.info(msg)
+                with c_a3:
+                    if st.button("🚀 Track Application", key=f"track_rec_{idx}", use_container_width=True):
                         ok = add_application(
                             title=job.get("title", "Unknown"),
                             company=job.get("company", "Unknown"),

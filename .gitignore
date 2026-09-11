@@ -4,15 +4,24 @@ __pycache__/
 *$py.class
 *.pyc
 
-# Environments
+# Environments & secrets
 .venv/
 venv/
 ENV/
 env/
+.env
+.env.local
 
-# Streamlit cache
+# Local SQLite databases
+*.db
+*.sqlite3
+database/*.db
+
+# Streamlit local cache & secrets
 .streamlit/__pycache__/
+.streamlit/secrets.toml
 
 # Local refactor backups
 app_backup.py
 backup_before_advanced_upgrade/
+backup_production_upgrade_v2/

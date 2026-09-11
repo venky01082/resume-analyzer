@@ -118,6 +118,9 @@ def render_sidebar():
         if st.button("🚪  Log Out", key="sidebar_logout_btn", use_container_width=True):
             st.session_state.authenticated = False
             st.session_state.auth_username = ""
+            st.session_state.resume_text = ""
+            st.session_state.resume_skills = []
+            st.session_state.resume_score = 0
             st.session_state.current_page = "dashboard"
             st.rerun()
         st.markdown("</div>", unsafe_allow_html=True)

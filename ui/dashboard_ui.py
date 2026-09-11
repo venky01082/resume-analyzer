@@ -192,12 +192,16 @@ def render_dashboard():
         if not jobs:
             st.info("No jobs found in the local catalog.")
         else:
-            recommendations = recommend_jobs(resume_skills, jobs) if resume_skills else [{"job": j, "score": 75, "matching_skills": [], "missing_skills": []} for j in jobs[:4]]
+            try:
+                from services.job_recommendation import recommend_jobs_for_user
+                recommendations = recommend_jobs_for_user(username, jobs, limit=4)
+            except Exception:
+                recommendations = recommend_jobs(resume_skills, jobs) if resume_skills else [{"job": j, "score": 75, "matching_skills": [], "missing_skills": []} for j in jobs[:4]]
             
             for idx, rec in enumerate(recommendations[:4]):
                 job = rec["job"]
                 score = rec["score"]
-                matching = rec.get("matching_skills", [])
+                matching = rec.get("explanation", {}).get("matching_skills", rec.get("matching_skills", []))
                 
                 with st.container():
                     st.markdown(f"""
