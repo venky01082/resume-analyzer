@@ -1393,8 +1393,8 @@ def step17_month(value):
 def step17_analytics(applications):
     total = len(applications)
     status_counts = {
-        "Saved": 0, "Applied": 0, "Assessment": 0, "Interview": 0,
-        "Offer": 0, "Selected": 0, "Rejected": 0, "Withdrawn": 0
+        "Wishlist": 0, "Saved": 0, "Applied": 0, "Assessment": 0, "Interview": 0,
+        "Technical Round": 0, "HR Round": 0, "Offer": 0, "Selected": 0, "Rejected": 0, "Withdrawn": 0
     }
     priority_counts = {"Low": 0, "Medium": 0, "High": 0}
     source_counts = {}
@@ -1427,12 +1427,16 @@ def step17_analytics(applications):
         if month:
             monthly_counts[month] = monthly_counts.get(month, 0) + 1
 
-    applied = status_counts["Applied"]
-    assessment = status_counts["Assessment"]
-    interview = status_counts["Interview"]
-    offers = status_counts["Offer"]
-    selected = status_counts["Selected"]
-    rejected = status_counts["Rejected"]
+    applied = status_counts.get("Applied", 0)
+    assessment = status_counts.get("Assessment", 0)
+    interview = (
+        status_counts.get("Interview", 0) +
+        status_counts.get("Technical Round", 0) +
+        status_counts.get("HR Round", 0)
+    )
+    offers = status_counts.get("Offer", 0)
+    selected = status_counts.get("Selected", 0)
+    rejected = status_counts.get("Rejected", 0)
 
     submitted = applied + assessment + interview + offers + selected + rejected
     response_count = assessment + interview + offers + selected + rejected

@@ -10,7 +10,7 @@ import uuid
 import base64
 import hashlib
 import secrets
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from typing import List, Dict, Any, Optional, Tuple
 
 from database.connection import execute_query, execute_mutation, get_db_connection
@@ -817,25 +817,31 @@ def calculate_user_analytics(user_id: str) -> Dict[str, Any]:
     apps = get_applications(user_id)
     total_apps = len(apps)
 
+    empty_metrics = {
+        "total_applications": 0,
+        "submitted_applications": 0,
+        "active_interviews": 0,
+        "total_offers": 0,
+        "total_rejections": 0,
+        "total_rejected": 0,
+        "applications_this_week": 0,
+        "applications_this_month": 0,
+        "response_rate": 0.0,
+        "interview_rate": 0.0,
+        "offer_rate": 0.0,
+        "rejection_rate": 0.0,
+        "average_days_to_response": 0.0,
+        "avg_match_score": 0.0,
+        "status_distribution": {s: 0 for s in STATUS_OPTIONS},
+        "recent_velocity": {"this_week": 0, "this_month": 0},
+        "top_companies": {},
+        "top_roles": {},
+        "has_sufficient_data": False,
+        "insights": ["Start tracking applications to view your personalized conversion funnel!"]
+    }
+
     if total_apps == 0:
-        return {
-            "total_applications": 0,
-            "submitted_applications": 0,
-            "active_interviews": 0,
-            "total_offers": 0,
-            "total_rejected": 0,
-            "response_rate": 0.0,
-            "interview_rate": 0.0,
-            "offer_rate": 0.0,
-            "rejection_rate": 0.0,
-            "avg_match_score": 0.0,
-            "status_distribution": {s: 0 for s in STATUS_OPTIONS},
-            "recent_velocity": {"this_week": 0, "this_month": 0},
-            "top_companies": [],
-            "top_roles": [],
-            "has_sufficient_data": False,
-            "insights": ["Start tracking applications to view your personalized conversion funnel!"]
-        }
+        return empty_metrics
 
     status_counts = get_status_counts(user_id)
 
@@ -844,23 +850,21 @@ def calculate_user_analytics(user_id: str) -> Dict[str, Any]:
         count for st_name, count in status_counts.items()
         if st_name not in ("Wishlist", "Saved")
     )
-    if submitted == 0:
-        submitted = total_apps
 
-    # Active interviews
+    # Active interviews (Interview, Technical Round, HR Round)
     interview_count = (
         status_counts.get("Interview", 0) +
         status_counts.get("Technical Round", 0) +
         status_counts.get("HR Round", 0)
     )
 
-    offers = status_counts.get("Offer", 0)
+    offers = status_counts.get("Offer", 0) + status_counts.get("Selected", 0)
     rejected = status_counts.get("Rejected", 0)
 
-    # Responses = anything progressed past Applied/Saved
+    # Responses = anything progressed past Applied/Saved/Wishlist
     responses = sum(
         count for st_name, count in status_counts.items()
-        if st_name in ("Screening", "Assessment", "Interview", "Technical Round", "HR Round", "Offer", "Rejected")
+        if st_name in ("Screening", "Assessment", "Interview", "Technical Round", "HR Round", "Offer", "Selected", "Rejected")
     )
 
     resp_rate = round((responses / submitted) * 100, 1) if submitted > 0 else 0.0
@@ -868,10 +872,42 @@ def calculate_user_analytics(user_id: str) -> Dict[str, Any]:
     off_rate = round((offers / submitted) * 100, 1) if submitted > 0 else 0.0
     rej_rate = round((rejected / submitted) * 100, 1) if submitted > 0 else 0.0
 
-    scores = [a.get("score", 0) for a in apps if a.get("score", 0) > 0]
+    scores = [a.get("score", 0) for a in apps if a.get("score", 0) and a.get("score", 0) > 0]
     avg_score = round(sum(scores) / len(scores), 1) if scores else 0.0
 
-    # Company & Role counts
+    # Weekly and Monthly application velocity & Days to response
+    today = date.today()
+    this_week_start = today - timedelta(days=today.weekday())
+    this_month_prefix = today.strftime("%Y-%m")
+
+    apps_this_week = 0
+    apps_this_month = 0
+    response_days_list = []
+
+    for a in apps:
+        app_date_str = str(a.get("applied_date", "")).strip()[:10]
+        if app_date_str:
+            try:
+                ad = datetime.strptime(app_date_str, "%Y-%m-%d").date()
+                if ad >= this_week_start:
+                    apps_this_week += 1
+                if app_date_str.startswith(this_month_prefix):
+                    apps_this_month += 1
+
+                st = a.get("status", "")
+                if st in ("Screening", "Assessment", "Interview", "Technical Round", "HR Round", "Offer", "Selected", "Rejected"):
+                    last_up = str(a.get("last_updated", "")).strip()[:10]
+                    if last_up:
+                        l_date = datetime.strptime(last_up, "%Y-%m-%d").date()
+                        diff_days = (l_date - ad).days
+                        if diff_days >= 0:
+                            response_days_list.append(diff_days)
+            except Exception:
+                pass
+
+    avg_days_to_response = round(sum(response_days_list) / len(response_days_list), 1) if response_days_list else 0.0
+
+    # Company & Role counts (as dictionaries)
     comp_map = {}
     role_map = {}
     for a in apps:
@@ -882,8 +918,8 @@ def calculate_user_analytics(user_id: str) -> Dict[str, Any]:
         if t:
             role_map[t] = role_map.get(t, 0) + 1
 
-    top_companies = sorted(comp_map.items(), key=lambda x: x[1], reverse=True)[:5]
-    top_roles = sorted(role_map.items(), key=lambda x: x[1], reverse=True)[:5]
+    top_companies = dict(sorted(comp_map.items(), key=lambda x: x[1], reverse=True)[:6])
+    top_roles = dict(sorted(role_map.items(), key=lambda x: x[1], reverse=True)[:6])
 
     # Honest Insights
     insights = []
@@ -901,20 +937,26 @@ def calculate_user_analytics(user_id: str) -> Dict[str, Any]:
             insights.append(f"Active interview momentum: {interview_count} applications currently in interview rounds.")
 
         if top_roles:
-            insights.append(f"Primary focus area: '{top_roles[0][0]}' is your most actively targeted role.")
+            first_role = next(iter(top_roles.keys()))
+            insights.append(f"Primary focus area: '{first_role}' is your most actively targeted role.")
 
     return {
         "total_applications": total_apps,
         "submitted_applications": submitted,
         "active_interviews": interview_count,
         "total_offers": offers,
+        "total_rejections": rejected,
         "total_rejected": rejected,
+        "applications_this_week": apps_this_week,
+        "applications_this_month": apps_this_month,
         "response_rate": resp_rate,
         "interview_rate": int_rate,
         "offer_rate": off_rate,
         "rejection_rate": rej_rate,
+        "average_days_to_response": avg_days_to_response,
         "avg_match_score": avg_score,
         "status_distribution": status_counts,
+        "recent_velocity": {"this_week": apps_this_week, "this_month": apps_this_month},
         "top_companies": top_companies,
         "top_roles": top_roles,
         "has_sufficient_data": has_sufficient_data,

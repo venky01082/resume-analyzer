@@ -51,7 +51,7 @@ def render_analytics():
         st.markdown(f"""
         <div class="stat-card">
             <div class="stat-label">📋 Tracked Roles</div>
-            <div class="stat-value">{user_metrics['total_applications']}</div>
+            <div class="stat-value">{user_metrics.get('total_applications', 0)}</div>
             <div class="stat-subtext-neutral">Total opportunities</div>
         </div>
         """, unsafe_allow_html=True)
@@ -59,31 +59,35 @@ def render_analytics():
         st.markdown(f"""
         <div class="stat-card">
             <div class="stat-label">📤 Submitted</div>
-            <div class="stat-value">{user_metrics['submitted_applications']}</div>
+            <div class="stat-value">{user_metrics.get('submitted_applications', 0)}</div>
             <div class="stat-subtext-neutral">Applied & in-review</div>
         </div>
         """, unsafe_allow_html=True)
     with m3:
+        tot_rejections = user_metrics.get('total_rejections', user_metrics.get('total_rejected', 0))
+        tot_offers = user_metrics.get('total_offers', 0)
+        active_ints = user_metrics.get('active_interviews', 0)
+        total_responses = active_ints + tot_offers + tot_rejections
         st.markdown(f"""
         <div class="stat-card">
             <div class="stat-label">⚡ Response Rate</div>
-            <div class="stat-value" style="color: #4f46e5;">{user_metrics['response_rate']}%</div>
-            <div class="stat-subtext-neutral">{user_metrics['active_interviews'] + user_metrics['total_offers'] + user_metrics['total_rejections']} responses</div>
+            <div class="stat-value" style="color: #4f46e5;">{user_metrics.get('response_rate', 0.0)}%</div>
+            <div class="stat-subtext-neutral">{total_responses} responses</div>
         </div>
         """, unsafe_allow_html=True)
     with m4:
         st.markdown(f"""
         <div class="stat-card">
             <div class="stat-label">🎤 Interview Rate</div>
-            <div class="stat-value" style="color: #0284c7;">{user_metrics['interview_rate']}%</div>
-            <div class="stat-subtext-neutral">{user_metrics['active_interviews']} rounds invited</div>
+            <div class="stat-value" style="color: #0284c7;">{user_metrics.get('interview_rate', 0.0)}%</div>
+            <div class="stat-subtext-neutral">{user_metrics.get('active_interviews', 0)} rounds invited</div>
         </div>
         """, unsafe_allow_html=True)
     with m5:
         st.markdown(f"""
         <div class="stat-card">
             <div class="stat-label">🎯 Avg Match</div>
-            <div class="stat-value" style="color: #10b981;">{user_metrics['avg_match_score']}%</div>
+            <div class="stat-value" style="color: #10b981;">{user_metrics.get('avg_match_score', 0.0)}%</div>
             <div class="stat-subtext-neutral">Across tracked roles</div>
         </div>
         """, unsafe_allow_html=True)
@@ -91,36 +95,40 @@ def render_analytics():
     st.markdown("<div style='height: 14px;'></div>", unsafe_allow_html=True)
 
     # Conversion Funnel Visual
-    st.markdown("""
+    status_counts = user_metrics.get('status_distribution', {})
+    saved_cnt = status_counts.get('Saved', 0) + status_counts.get('Wishlist', 0)
+    applied_cnt = status_counts.get('Applied', 0)
+    screening_cnt = status_counts.get('Assessment', 0) + status_counts.get('Screening', 0)
+    interview_cnt = user_metrics.get('active_interviews', 0)
+    offers_cnt = user_metrics.get('total_offers', 0)
+
+    st.markdown(f"""
     <div class="saas-card" style="margin-bottom: 1.25rem;">
         <div class="saas-card-header">🚀 Application Conversion Funnel</div>
         <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; text-align: center; margin-top: 10px;">
             <div style="background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0;">
                 <div style="font-size: 11px; font-weight: 700; color: #64748b;">1. SAVED</div>
-                <div style="font-size: 20px; font-weight: 800; color: #0f172a;">{status_counts.get('Saved', 0)}</div>
+                <div style="font-size: 20px; font-weight: 800; color: #0f172a;">{saved_cnt}</div>
             </div>
             <div style="background: #eff6ff; padding: 12px; border-radius: 8px; border: 1px solid #bfdbfe;">
                 <div style="font-size: 11px; font-weight: 700; color: #1e40af;">2. APPLIED</div>
-                <div style="font-size: 20px; font-weight: 800; color: #1e40af;">{status_counts.get('Applied', 0)}</div>
+                <div style="font-size: 20px; font-weight: 800; color: #1e40af;">{applied_cnt}</div>
             </div>
             <div style="background: #f0fdf4; padding: 12px; border-radius: 8px; border: 1px solid #bbf7d0;">
                 <div style="font-size: 11px; font-weight: 700; color: #166534;">3. SCREENING</div>
-                <div style="font-size: 20px; font-weight: 800; color: #166534;">{status_counts.get('Screening', 0)}</div>
+                <div style="font-size: 20px; font-weight: 800; color: #166534;">{screening_cnt}</div>
             </div>
             <div style="background: #eef2ff; padding: 12px; border-radius: 8px; border: 1px solid #c7d2fe;">
                 <div style="font-size: 11px; font-weight: 700; color: #4338ca;">4. INTERVIEWS</div>
-                <div style="font-size: 20px; font-weight: 800; color: #4338ca;">{user_metrics['active_interviews']}</div>
+                <div style="font-size: 20px; font-weight: 800; color: #4338ca;">{interview_cnt}</div>
             </div>
             <div style="background: #ecfdf5; padding: 12px; border-radius: 8px; border: 1px solid #a7f3d0;">
                 <div style="font-size: 11px; font-weight: 700; color: #065f46;">5. OFFERS</div>
-                <div style="font-size: 20px; font-weight: 800; color: #065f46;">{user_metrics['total_offers']}</div>
+                <div style="font-size: 20px; font-weight: 800; color: #065f46;">{offers_cnt}</div>
             </div>
         </div>
     </div>
-    """.format(
-        status_counts=user_metrics['status_distribution'],
-        user_metrics=user_metrics
-    ), unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
 
     # Charts Row: Status Distribution & Monthly Trends
     c_left, c_right = st.columns(2)
@@ -130,11 +138,14 @@ def render_analytics():
         <div class="saas-card">
             <div class="saas-card-header">📊 Applications by Pipeline Stage</div>
         """, unsafe_allow_html=True)
-        status_dict = user_metrics["status_distribution"]
-        df_status = pd.DataFrame(list(status_dict.items()), columns=["Stage", "Count"])
-        df_status = df_status[df_status["Count"] > 0]
-        if not df_status.empty:
-            st.bar_chart(df_status.set_index("Stage"))
+        status_dict = user_metrics.get("status_distribution", {})
+        if isinstance(status_dict, dict) and status_dict:
+            df_status = pd.DataFrame(list(status_dict.items()), columns=["Stage", "Count"])
+            df_status = df_status[df_status["Count"] > 0]
+            if not df_status.empty:
+                st.bar_chart(df_status.set_index("Stage"))
+            else:
+                st.info("No status data to visualize.")
         else:
             st.info("No status data to visualize.")
         st.markdown("</div>", unsafe_allow_html=True)
@@ -161,8 +172,15 @@ def render_analytics():
             <div class="saas-card-header">🏢 Top Companies in Pipeline</div>
         """, unsafe_allow_html=True)
         company_counts = user_metrics.get("top_companies", {})
-        if company_counts:
-            df_comp = pd.DataFrame(list(company_counts.items()), columns=["Company", "Count"]).sort_values("Count", ascending=False).head(6)
+        if isinstance(company_counts, dict):
+            comp_items = list(company_counts.items())
+        elif isinstance(company_counts, (list, tuple)):
+            comp_items = [(x[0], x[1]) if isinstance(x, (list, tuple)) and len(x) >= 2 else (str(x), 1) for x in company_counts]
+        else:
+            comp_items = []
+
+        if comp_items:
+            df_comp = pd.DataFrame(comp_items, columns=["Company", "Count"]).sort_values("Count", ascending=False).head(6)
             for _, row in df_comp.iterrows():
                 st.markdown(f"""
                 <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid #f1f5f9; font-size: 13px;">
@@ -205,13 +223,13 @@ def render_analytics():
     """, unsafe_allow_html=True)
     
     recs = []
-    if user_metrics['submitted_applications'] < 5:
+    if user_metrics.get('submitted_applications', 0) < 5:
         recs.append("Increase your weekly application volume to build statistical momentum across hiring cycles.")
-    if user_metrics['avg_match_score'] < 65:
+    if user_metrics.get('avg_match_score', 0.0) < 65:
         recs.append("Tailor your resume keywords before applying to increase callback rates above 75%.")
-    if user_metrics['interview_rate'] > 20:
+    if user_metrics.get('interview_rate', 0.0) > 20:
         recs.append("High interview conversion! Focus heavily on technical round and coding assessment preparations.")
-    if user_metrics['total_offers'] > 0:
+    if user_metrics.get('total_offers', 0) > 0:
         recs.append("Congratulations on receiving offers! Compare compensation packages and benefits before finalizing.")
     if not recs:
         recs.append("Your application velocity is consistent. Keep monitoring upcoming follow-up dates in the Follow-Up Center.")
