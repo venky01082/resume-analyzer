@@ -369,24 +369,50 @@ def get_default_resume(user_id: str) -> Optional[Dict[str, Any]]:
     return resumes[0]
 
 
+class ResumeSaveResult(dict):
+    """
+    Dual-interface return object for save_resume:
+    - Dict interface: record.get("text"), record["resume_id"], etc. for UI callers.
+    - Tuple unpacking: ok, resume_id = save_resume(...) for test & script callers.
+    - Truthiness: bool(record) evaluates to True if saved, False on failure.
+    """
+    def __iter__(self):
+        yield self.get("success", False)
+        yield self.get("resume_id", "")
+
+    def __bool__(self):
+        return bool(self.get("success", False))
+
+
 def save_resume(
     user_id: str,
     title: str,
     filename: str,
-    text: str,
+    text: str = "",
     score: int = 0,
     parsed_data: Optional[Dict[str, Any]] = None,
-    is_default: bool = False
-) -> Tuple[bool, str]:
-    """Save or update a resume record in database."""
+    is_default: bool = False,
+    set_default: Optional[bool] = None,
+    content: Optional[str] = None,
+    **kwargs
+) -> ResumeSaveResult:
+    """Save or update a resume record in database with full backward compatibility."""
     user_id = user_id.strip().lower()
     resume_id = f"res_{uuid.uuid4().hex[:10]}"
     uploaded_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    parsed_json = json.dumps(parsed_data or {})
+
+    # Resolve text / content alias
+    actual_text = content if (content is not None and not text) else text
+
+    # Resolve set_default / is_default alias
+    actual_default = bool(set_default) if set_default is not None else bool(is_default)
+
+    parsed_dict = parsed_data or {}
+    parsed_json = json.dumps(parsed_dict)
 
     # If first resume or requested default, reset others
     resumes = get_resumes(user_id)
-    if is_default or len(resumes) == 0:
+    if actual_default or len(resumes) == 0:
         execute_mutation("UPDATE resumes SET is_default = 0 WHERE user_id = ?", (user_id,))
         is_def_val = 1
     else:
@@ -395,14 +421,76 @@ def save_resume(
     count = execute_mutation("""
         INSERT INTO resumes (resume_id, user_id, title, filename, text, uploaded_at, score, is_default, parsed_data)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    """, (resume_id, user_id, title, filename, text, uploaded_at, int(score), is_def_val, parsed_json))
+    """, (resume_id, user_id, title, filename, actual_text, uploaded_at, int(score), is_def_val, parsed_json))
 
     if count > 0:
-        return True, resume_id
-    return False, ""
+        return ResumeSaveResult({
+            "success": True,
+            "resume_id": resume_id,
+            "user_id": user_id,
+            "title": title.strip() or filename or "Resume",
+            "filename": filename,
+            "text": actual_text,
+            "uploaded_at": uploaded_at,
+            "score": int(score),
+            "is_default": bool(is_def_val),
+            "parsed_data": parsed_dict,
+            "content": actual_text,
+            "skills": parsed_dict.get("skills", [])
+        })
+
+    return ResumeSaveResult({
+        "success": False,
+        "resume_id": "",
+        "user_id": user_id,
+        "title": title,
+        "filename": filename,
+        "text": actual_text,
+        "uploaded_at": uploaded_at,
+        "score": int(score),
+        "is_default": False,
+        "parsed_data": parsed_dict,
+        "content": actual_text,
+        "skills": []
+    })
 
 
-create_resume = save_resume
+def create_resume(
+    user_id: str,
+    title: str,
+    content: str = "",
+    skills: Optional[List[str]] = None,
+    score: int = 0,
+    filename: str = "resume.txt",
+    is_default: bool = False,
+    text: Optional[str] = None,
+    parsed_data: Optional[Dict[str, Any]] = None,
+    set_default: Optional[bool] = None,
+    **kwargs
+) -> Tuple[bool, str, Dict[str, Any]]:
+    """
+    Create a new resume record returning (success, message, record_dict).
+    Compatible with ui/tailoring_ui.py and callers expecting a 3-element sequence.
+    """
+    resume_text = text if text is not None else content
+    p_data = dict(parsed_data or {})
+    if skills and "skills" not in p_data:
+        p_data["skills"] = skills
+
+    rec = save_resume(
+        user_id=user_id,
+        title=title,
+        filename=filename,
+        text=resume_text,
+        score=score,
+        parsed_data=p_data,
+        is_default=is_default,
+        set_default=set_default,
+        **kwargs
+    )
+    if rec.get("success"):
+        return True, "Resume saved successfully", rec
+    return False, "Failed to save resume", rec
 
 
 def set_default_resume(user_id: str, resume_id: str) -> bool:
@@ -553,8 +641,8 @@ def get_application(user_id: str, app_id: str) -> Optional[Dict[str, Any]]:
 
 def create_application(
     user_id: str,
-    title: str,
-    company: str,
+    title: str = "",
+    company: str = "",
     location: str = "India",
     score: int = 0,
     application_url: str = "",
@@ -570,11 +658,18 @@ def create_application(
     job_description: str = "",
     resume_used: str = "",
     cover_letter_used: str = "",
-    next_action: str = ""
+    next_action: str = "",
+    job_title: Optional[str] = None,
+    resume_version: Optional[str] = None,
+    **kwargs
 ) -> Tuple[bool, str]:
     """Create a new tracked application record with initial status history."""
     user_id = user_id.strip().lower()
-    if not title or not company:
+    actual_title = (job_title if job_title is not None else title).strip()
+    actual_company = company.strip()
+    actual_resume_used = (resume_version if resume_version is not None else resume_used).strip()
+
+    if not actual_title or not actual_company:
         return False, "Job title and Company name are required."
 
     if status not in STATUS_OPTIONS:
@@ -598,10 +693,10 @@ def create_application(
                 resume_used, cover_letter_used, next_action
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
-            app_id, user_id, title, company, location, int(score), application_url,
+            app_id, user_id, actual_title, actual_company, location, int(score), application_url,
             status, priority, applied_date, follow_up_date, now_str,
             notes, contact_name, contact_email, salary, source, job_description,
-            resume_used, cover_letter_used, next_action
+            actual_resume_used, cover_letter_used, next_action
         ))
 
         # Log initial status history
@@ -950,6 +1045,7 @@ def calculate_user_analytics(user_id: str) -> Dict[str, Any]:
         "average_days_to_response": 0.0,
         "avg_match_score": 0.0,
         "status_distribution": {s: 0 for s in STATUS_OPTIONS},
+        "status_counts": {s: 0 for s in STATUS_OPTIONS},
         "recent_velocity": {"this_week": 0, "this_month": 0},
         "top_companies": {},
         "top_roles": {},
@@ -1073,6 +1169,7 @@ def calculate_user_analytics(user_id: str) -> Dict[str, Any]:
         "average_days_to_response": avg_days_to_response,
         "avg_match_score": avg_score,
         "status_distribution": status_counts,
+        "status_counts": status_counts,
         "recent_velocity": {"this_week": apps_this_week, "this_month": apps_this_month},
         "top_companies": top_companies,
         "top_roles": top_roles,

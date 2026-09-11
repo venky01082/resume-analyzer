@@ -41,6 +41,9 @@ def start_new_interview(
     resume_id: str = "",
     job_id: str = "",
     job_data: Optional[Dict[str, Any]] = None,
+    resume_text: str = "",
+    job_description: str = "",
+    **kwargs
 ) -> Tuple[bool, str, Optional[Dict[str, Any]]]:
     """
     Initialize a new interview session and generate the grounded first question.
@@ -49,20 +52,19 @@ def start_new_interview(
     if not target_role or not target_role.strip():
         return False, "Target role is required to begin an interview.", None
 
-    resume_text = ""
-    if resume_id:
+    if not resume_text and resume_id:
         r_rec = get_resume(user_id, resume_id)
         if r_rec:
             resume_text = r_rec.get("text", "")
 
-    job_description = ""
-    if job_data:
-        job_description = job_data.get("description") or job_data.get("job_description") or ""
-    elif job_id:
-        saved_list = get_saved_jobs(user_id)
-        matched_job = next((j for j in saved_list if j.get("job_id") == job_id), None)
-        if matched_job:
-            job_description = matched_job.get("description", "")
+    if not job_description:
+        if job_data:
+            job_description = job_data.get("description") or job_data.get("job_description") or ""
+        elif job_id:
+            saved_list = get_saved_jobs(user_id)
+            matched_job = next((j for j in saved_list if j.get("job_id") == job_id), None)
+            if matched_job:
+                job_description = matched_job.get("description", "")
 
     metadata = {
         "job_title": job_data.get("title", "") if job_data else "",

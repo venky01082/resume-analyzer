@@ -9,6 +9,7 @@ from database.repository import (
     get_default_resume,
     save_resume,
     create_resume,
+    ResumeSaveResult,
     set_default_resume,
     update_resume_title,
     delete_resume,
