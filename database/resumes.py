@@ -10,6 +10,7 @@ from database.repository import (
     save_resume,
     create_resume,
     set_default_resume,
+    update_resume_title,
     delete_resume,
 )
 

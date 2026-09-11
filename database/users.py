@@ -15,6 +15,7 @@ from database.repository import (
     update_user_password,
     delete_user_account,
     get_user_profile,
+    auth_get_profile,
     update_user_profile,
     get_user_preferences,
     update_user_preferences,

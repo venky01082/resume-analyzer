@@ -221,6 +221,14 @@ def get_user_profile(username: str) -> Dict[str, Any]:
     return UserProfile.from_dict(row).to_dict()
 
 
+def auth_get_profile(username: str) -> Dict[str, Any]:
+    """
+    Retrieve the authenticated user's profile with strict user isolation.
+    Backward-compatible alias for get_user_profile.
+    """
+    return get_user_profile(username)
+
+
 def update_user_profile(username: str, profile_data: Dict[str, Any]) -> bool:
     """Update UserProfile fields for a user."""
     username = username.strip().lower()
@@ -413,6 +421,23 @@ def delete_resume(user_id: str, resume_id: str) -> bool:
     resumes = get_resumes(user_id)
     if resumes and not any(r.get("is_default") for r in resumes):
         execute_mutation("UPDATE resumes SET is_default = 1 WHERE user_id = ? AND resume_id = ?", (user_id, resumes[0]["resume_id"]))
+    return count > 0
+
+
+def update_resume_title(user_id: str, resume_id: str, new_title: str) -> bool:
+    """
+    Update only the title of a resume owned by user_id with strict user isolation.
+    Preserves all resume text, metadata, parsed data, and default status.
+    """
+    user_id = user_id.strip().lower()
+    resume_id = resume_id.strip()
+    new_title = new_title.strip()
+    if not new_title or not resume_id:
+        return False
+    count = execute_mutation(
+        "UPDATE resumes SET title = ? WHERE user_id = ? AND resume_id = ?",
+        (new_title, user_id, resume_id)
+    )
     return count > 0
 
 
@@ -716,49 +741,136 @@ def get_status_counts(user_id_or_apps: Any) -> Dict[str, int]:
 
 def get_overdue_follow_ups(user_id_or_apps: Any, reference_date: Optional[str] = None) -> List[Dict[str, Any]]:
     """Retrieve applications with overdue follow-ups. Accepts user_id or list of apps."""
-    target_dt = reference_date or date.today().isoformat()
+    try:
+        ref_dt = date.fromisoformat(reference_date) if reference_date else date.today()
+    except (ValueError, TypeError):
+        ref_dt = date.today()
+    ref_iso = ref_dt.isoformat()
+
     if isinstance(user_id_or_apps, list):
         apps = user_id_or_apps
     else:
         apps = get_applications(str(user_id_or_apps))
     overdue = []
     for a in apps:
-        f_date = a.get("follow_up_date", "").strip()
+        if not isinstance(a, dict):
+            continue
+        raw_f_date = a.get("follow_up_date")
+        if not raw_f_date or not isinstance(raw_f_date, str):
+            continue
+        f_date_str = raw_f_date.strip()
+        if not f_date_str:
+            continue
+        try:
+            parsed_d = date.fromisoformat(f_date_str.split()[0].split("T")[0])
+            app_iso = parsed_d.isoformat()
+        except (ValueError, TypeError):
+            continue
+
         status = a.get("status", "")
-        if f_date and f_date < target_dt and status not in ("Offer", "Rejected", "Withdrawn"):
+        if status in ("Offer", "Rejected", "Withdrawn"):
+            continue
+
+        if app_iso < ref_iso:
             overdue.append(a)
     return overdue
 
 
 def get_today_follow_ups(user_id_or_apps: Any, reference_date: Optional[str] = None) -> List[Dict[str, Any]]:
     """Retrieve applications with follow-ups scheduled for today. Accepts user_id or list of apps."""
-    target_dt = reference_date or date.today().isoformat()
+    try:
+        ref_dt = date.fromisoformat(reference_date) if reference_date else date.today()
+    except (ValueError, TypeError):
+        ref_dt = date.today()
+    ref_iso = ref_dt.isoformat()
+
     if isinstance(user_id_or_apps, list):
         apps = user_id_or_apps
     else:
         apps = get_applications(str(user_id_or_apps))
     today_list = []
     for a in apps:
-        f_date = a.get("follow_up_date", "").strip()
+        if not isinstance(a, dict):
+            continue
+        raw_f_date = a.get("follow_up_date")
+        if not raw_f_date or not isinstance(raw_f_date, str):
+            continue
+        f_date_str = raw_f_date.strip()
+        if not f_date_str:
+            continue
+        try:
+            parsed_d = date.fromisoformat(f_date_str.split()[0].split("T")[0])
+            app_iso = parsed_d.isoformat()
+        except (ValueError, TypeError):
+            continue
+
         status = a.get("status", "")
-        if f_date == target_dt and status not in ("Offer", "Rejected", "Withdrawn"):
+        if status in ("Offer", "Rejected", "Withdrawn"):
+            continue
+
+        if app_iso == ref_iso:
             today_list.append(a)
     return today_list
 
 
-def get_upcoming_follow_ups(user_id_or_apps: Any, reference_date: Optional[str] = None) -> List[Dict[str, Any]]:
-    """Retrieve applications with future follow-ups scheduled. Accepts user_id or list of apps."""
-    target_dt = reference_date or date.today().isoformat()
+def get_upcoming_follow_ups(
+    user_id_or_apps: Any,
+    reference_date: Optional[str] = None,
+    days_ahead: Optional[int] = None
+) -> List[Dict[str, Any]]:
+    """
+    Retrieve applications with future follow-ups scheduled.
+    Supports both user_id string or pre-fetched list of applications.
+    Accepts reference_date (default today) and optional days_ahead window (e.g. days_ahead=14).
+    """
+    try:
+        ref_dt = date.fromisoformat(reference_date) if reference_date else date.today()
+    except (ValueError, TypeError):
+        ref_dt = date.today()
+    ref_iso = ref_dt.isoformat()
+
+    max_iso = None
+    if days_ahead is not None:
+        try:
+            max_iso = (ref_dt + timedelta(days=int(days_ahead))).isoformat()
+        except (ValueError, TypeError):
+            max_iso = None
+
     if isinstance(user_id_or_apps, list):
         apps = user_id_or_apps
     else:
         apps = get_applications(str(user_id_or_apps))
+
     upcoming = []
     for a in apps:
-        f_date = a.get("follow_up_date", "").strip()
+        if not isinstance(a, dict):
+            continue
+        raw_f_date = a.get("follow_up_date")
+        if not raw_f_date or not isinstance(raw_f_date, str):
+            continue
+        f_date_str = raw_f_date.strip()
+        if not f_date_str:
+            continue
+
+        # Parse date defensively
+        try:
+            parsed_d = date.fromisoformat(f_date_str.split()[0].split("T")[0])
+            app_iso = parsed_d.isoformat()
+        except (ValueError, TypeError):
+            continue
+
         status = a.get("status", "")
-        if f_date > target_dt and status not in ("Offer", "Rejected", "Withdrawn"):
-            upcoming.append(a)
+        if status in ("Offer", "Rejected", "Withdrawn"):
+            continue
+
+        # Must be strictly in the future
+        if app_iso > ref_iso:
+            if max_iso is not None:
+                if app_iso <= max_iso:
+                    upcoming.append(a)
+            else:
+                upcoming.append(a)
+
     return upcoming
 
 
